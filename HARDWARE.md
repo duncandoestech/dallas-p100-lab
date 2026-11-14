@@ -9,7 +9,6 @@
 | RAM | 128 GB DDR4 (4x 32 GB) | 2400 MT/s modules; the E5-2620 v3 runs them at 1866 MT/s |
 | GPUs | 2x Tesla P100 PCIe 16 GB (GP100) | 32 GB VRAM as two pools; no NVLink, so cross-card traffic goes over PCIe |
 | PSU | Stock Dell Precision 7910 power supply | The 7910 takes a single PSU, which feeds both cards |
-| Display | NVIDIA GeForce GT 610 (GF119, Fermi) | Console only. No current driver supports it, which is fine headless |
 | OS disk | Samsung 850 EVO 120 GB SATA SSD | EFI, `/boot`, LVM root (110 GB) |
 | Model disk | Patriot P220 512 GB SATA SSD | One XFS partition at `/mnt/models` |
 

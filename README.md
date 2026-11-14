@@ -17,7 +17,6 @@ lot of RAM, so it runs a much bigger MoE model whose experts live in RAM and str
 | CPU | 1x Xeon E5-2620 v3 (6 cores / 12 threads, 2.4 GHz, AVX2) |
 | RAM | 128 GB DDR4 (4x 32 GB, 2400 MT/s modules running at 1866 MT/s, the CPU's limit) |
 | PSU | Stock Dell 7910 power supply (single) |
-| Display | GeForce GT 610 (Fermi, no driver; console only) |
 | Storage | 120 GB SATA SSD for the OS, 512 GB SATA SSD for models |
 | OS | Fedora 45 Server, kernel 7.3, NVIDIA 580xx driver |
 
@@ -33,14 +32,14 @@ Anthropic-compatible API plus a web chat page. How it's built and run: [SOFTWARE
 | Measurement | Result |
 |---|---|
 | Agent battery (9 tool-use tasks x 3) | **27 of 27 passed, 63 s mean per task** |
-| Generation, short code prompt* | 41.9 tokens/s (MTP: 99 of 119 drafts accepted) |
+| Prompt processing, 34,872-token prompt | **856 tokens/s** (777 at 17,101 tokens) |
+| Generation after that prompt, 512 tokens | **44.2 tokens/s** (43.5 after the 17K prompt) |
 | Load, warm restart / cold boot | about 160 s / about 330 s until ready |
 | RAM while loaded | 105 GiB used, 18 GiB minimum available during load |
 | VRAM | 16.1 GB of 16 GB on each card (by design) |
 | GPU temperature, battery | 68 °C peak |
 
-\*Measured before the 150 W cap was set. All measured 2026-11-14. More in [BENCHMARKS.md](BENCHMARKS.md). Long-prompt prefill speed has **not** been measured on
-this box yet.
+All measured 2026-11-14. More in [BENCHMARKS.md](BENCHMARKS.md).
 
 ## What mattered
 
