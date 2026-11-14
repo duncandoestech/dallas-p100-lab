@@ -1,0 +1,13 @@
+[Unit]
+Description=Cap both Tesla P100s at 150 W
+After=nvidia-persistenced.service
+Wants=nvidia-persistenced.service
+Before=strata.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/nvidia-smi -i 0,1 -pl 150
+
+[Install]
+WantedBy=multi-user.target

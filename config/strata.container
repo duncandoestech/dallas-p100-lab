@@ -1,0 +1,28 @@
+# Strata: Qwen3.8-Flash-Next UD-Q4_K_XL on 2x P100 (recipe 2026-11-13, overnight profile). LAN :8080, no API key.
+[Unit]
+Description=Strata Qwen3.8-Flash-Next Q4_K_XL (2x P100)
+Wants=network-online.target
+After=network-online.target nvidia-persistenced.service
+RequiresMountsFor=/mnt/models
+
+[Container]
+ContainerName=strata
+Image=localhost/strata-p100:q4kxl-2026-11-13
+Network=host
+AddDevice=nvidia.com/gpu=all
+SecurityLabelDisable=true
+Volume=/mnt/models:/models
+Ulimit=memlock=-1:-1
+StopTimeout=60
+PodmanArgs=--ipc=host --memory=118g --memory-swap=118g
+Exec=.venv/bin/python -m serve.server --engine strata --config /models/strata/config/q4.json --host 0.0.0.0 --port 8080 --no-api-key
+
+[Service]
+Restart=on-failure
+RestartSec=30
+TimeoutStartSec=900
+TimeoutStopSec=90
+ManagedOOMPreference=avoid
+
+[Install]
+WantedBy=multi-user.target
