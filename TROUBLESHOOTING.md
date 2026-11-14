@@ -43,8 +43,7 @@ force-killed it.
 ## RPM Fusion's `akmod-nvidia` installs a driver that ignores the cards
 
 `akmod-nvidia` from RPM Fusion is the current branch (620 here), which dropped Pascal. Install the `580xx` packages
-instead (see [SOFTWARE.md](SOFTWARE.md#os-and-driver)). The GT 610 display card (Fermi) isn't supported by 580 either.
-That's fine: the box is headless and the console works without a driver.
+instead (see [SOFTWARE.md](SOFTWARE.md#os-and-driver)).
 
 ## Don't build next to a loaded engine
 

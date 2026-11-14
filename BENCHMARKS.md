@@ -15,17 +15,31 @@ vocabulary, one request at a time.
 
 Logged at 1 Hz during the first load. Host RAM use stayed under the 118 GB container cap the whole time.
 
-## Single requests
+## Prompt processing and generation
 
-Through the OpenAI API from another machine on the LAN, before the 150 W cap was set:
+Single requests through the OpenAI API from another machine on the LAN. Each prompt was real text (code and Markdown
+documentation) with a unique random prefix, so nothing came from Strata's conversation cache (`cache_n` 0 in both).
+Temperature 0, 512 tokens generated.
+
+| Prompt | Prompt processing | Generation | MTP drafts accepted | Wall time |
+|---:|---:|---:|---:|---:|
+| 17,101 tokens | 776.5 tokens/s | 43.5 tokens/s | 245 of 380 | 33.9 s |
+| 34,872 tokens | 856.0 tokens/s | 44.2 tokens/s | 257 of 399 | 52.4 s |
+
+One run per size. The recipe's numbers, on hosts with 384 GB of RAM, are 913-932 tokens/s prompt processing and
+40-43 tokens/s generation at 32,757 tokens, so dallas reads a 35K prompt about 6-8% slower and generates at the same
+speed or slightly faster. Longer prompts haven't been measured here yet; the recipe goes to 250K.
+
+## Short requests
+
+Before the 150 W cap was set:
 
 | Request | Prompt | Generated | Generation speed | MTP drafts accepted |
 |---|---:|---:|---:|---:|
 | "Write a Python function is_prime(n)" | 69 tokens | 151 tokens | 41.9 tokens/s | 99 of 119 |
 | "What is 17*23?" (after a cold boot) | short | short | 40.5 tokens/s | |
 
-Both answers were correct. These are single runs, not a sweep. The recipe's own numbers, on hosts with 384 GB of RAM, are about 880-930 tokens/s prompt processing and 35-45 tokens/s generation from 32K to 250K tokens of
-uncached input. Long-prompt prefill hasn't been measured on this box yet.
+Both answers were correct. Single runs; prompts this short say nothing about prompt-processing speed.
 
 ## Agent battery
 
