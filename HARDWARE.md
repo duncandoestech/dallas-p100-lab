@@ -23,14 +23,17 @@
 
 - **Power limit: 150 W per card,** set at boot (see [SOFTWARE.md](SOFTWARE.md#gpu-power-limit)). The cap is an
   average: during the battery single readings reached 190 W, and 1.8% of samples were over 155 W.
-- Measured during the agent battery: 68 °C peak. Idle: 33-37 °C.
+- **Fan:** an ARCTIC USB fan controller with one ARCTIC S8038-10K, driven from the GPU temperature
+  ([SOFTWARE.md](SOFTWARE.md#gpu-fan)). Tuned to be quiet and let the cards run up to about 75 °C: under 150 W load
+  it held 71 °C at about 32% fan (3,600 rpm).
+- Before the fan curve (2026-11-14): 68 °C peak during the agent battery, 33-37 °C idle.
 
 ## RAM is the constraint
 
 The Q4_K_XL model is 111 GB on disk, more than three times the VRAM. Most experts stay in pinned RAM and are copied to
 the cards as needed, and the 28.8 GB per-layer lookup table is also held in RAM. With the default profile:
 
-- 105 GiB used once loaded, out of 125 GiB that Linux sees.
+- 105 GiB used once loaded, out of 125 GiB that Linux sees (106 GiB with pictures on).
 - 107 GiB peak during the load, 18 GiB minimum available.
 
 Megla's README lists 96 GB as the minimum for this file, with a lower-RAM profile. The recipe's benchmark hosts had
