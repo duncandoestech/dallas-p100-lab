@@ -4,8 +4,8 @@
 (32 GB of VRAM) and 128 GB of RAM. It runs **Qwen3.8-Flash-Next** (unsloth `UD-Q4_K_XL`, 111 GB) on Megla123's
 P100 port of Strata's split engine, in a podman container. This repo is the build notes and the measured results.
 
-It's the sibling of [houston-p100-lab](https://github.com/duncandoestech/houston-p100-lab), the 4x P100 llama.cpp
-build. Houston has little RAM and four cards, so it runs a dense 27B model fully in VRAM. Dallas has two cards and a
+It's the sibling of [houston-p100-lab](https://github.com/duncandoestech/houston-p100-lab), a 2x P100 llama.cpp
+build. Both boxes have two cards. Houston has little RAM, so it runs a dense 27B model fully in VRAM. Dallas has a
 lot of RAM, so it runs a much bigger MoE model whose experts live in RAM and stream to the cards.
 
 ## The box

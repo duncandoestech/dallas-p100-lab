@@ -68,9 +68,9 @@ Hermes Agent against the Strata endpoint. 65,536-token agent context.
 - Strata caps thinking at 6,144 of an 8,192-token `max_tokens`, so the answer always has room. llama.cpp doesn't do
   this, which can move pass rates and wall times on its own.
 
-For a rough comparison, houston's production setup (Qwen3.8-27B `UD-Q6_K_XL` on four P100s with Kmic's llama.cpp fork)
-passed 26 of 27 at 120 s mean per task on the same nine tasks. Different model, engine and card count, so this
-says where dallas stands, not which part is responsible.
+For a rough comparison, houston's production setup at the time (Qwen3.8-27B `UD-Q6_K_XL` on the four P100s it had
+then, with Kmic's llama.cpp fork) passed 26 of 27 at 120 s mean per task on the same nine tasks. Different model,
+engine and card count, so this says where dallas stands, not which part is responsible.
 
 ### Telemetry during the battery
 
