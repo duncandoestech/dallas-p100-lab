@@ -26,20 +26,22 @@ Details: [HARDWARE.md](HARDWARE.md).
 
 Qwen3.8-Flash-Next `UD-Q4_K_XL` on [Megla123/qwen3.8-flash-next-2x-p100](https://github.com/Megla123/qwen3.8-flash-next-2x-p100)
 (`5e29760`) plus the incumbent-rounding patch from a recipe shared on the P100 Discord, served by [Strata](https://github.com/Niko1221/Strata)
-(`ffa80d7`). 262,144-token context, MTP drafting, one request at a time, 150 W per card, OpenAI- and
-Anthropic-compatible API plus a web chat page. How it's built and run: [SOFTWARE.md](SOFTWARE.md).
+(`ffa80d7`). 262,144-token context, MTP drafting, pictures as input (encoded on the CPU), one request at a time,
+150 W per card, OpenAI- and Anthropic-compatible API plus a web chat page. How it's built and run: [SOFTWARE.md](SOFTWARE.md).
 
 | Measurement | Result |
 |---|---|
+| Writing, Megla's `bench.py`, tuned | **48.7 tokens/s fresh, 57-58 tokens/s on edits** |
 | Agent battery (9 tool-use tasks x 3) | **27 of 27 passed, 63 s mean per task** |
 | Prompt processing, 34,872-token prompt | **856 tokens/s** (777 at 17,101 tokens) |
 | Generation after that prompt, 512 tokens | **44.2 tokens/s** (43.5 after the 17K prompt) |
 | Load, warm restart / cold boot | about 160 s / about 330 s until ready |
 | RAM while loaded | 105 GiB used, 18 GiB minimum available during load |
 | VRAM | 16.1 GB of 16 GB on each card (by design) |
-| GPU temperature, battery | 68 °C peak |
+| GPU temperature under load, quiet fan curve | 71 °C peak at about 32% fan |
+| llama.cpp v1.0.0, same box and model | about 20 tokens/s best case |
 
-All measured 2026-11-14. More in [BENCHMARKS.md](BENCHMARKS.md).
+Tuning and llama.cpp on 2026-11-15/16, the rest on 2026-11-14. More in [BENCHMARKS.md](BENCHMARKS.md).
 
 ## What mattered
 
@@ -49,6 +51,8 @@ All measured 2026-11-14. More in [BENCHMARKS.md](BENCHMARKS.md).
 - **RAM is the limit, not VRAM.** The recipe was measured on 384 GB hosts and never measured a minimum. On 128 GB the
   default profile fits with about 18 GiB to spare at the tightest point of the load. Nothing else big runs on the box.
 - **Never compile on the box while the model is loaded.** It pins most of the RAM.
+- **One setting was worth tuning.** Keeping 1 GiB more experts on the cards (`FNX_EXPERT_RAM_GIB` 51.5) made writing
+  about 4% faster with the same answers. Nothing else tried moved it.
 - **Installing the driver pulled in a half-installed new kernel** (core but not `kernel-modules`). Rebooting into it
   would have left the box without its network driver. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
@@ -57,10 +61,10 @@ All measured 2026-11-14. More in [BENCHMARKS.md](BENCHMARKS.md).
 | File | What's in it |
 |---|---|
 | [HARDWARE.md](HARDWARE.md) | Workstation, GPUs, RAM, storage, PCIe |
-| [SOFTWARE.md](SOFTWARE.md) | Driver, storage, monitoring, power cap, container build, model prep, service |
-| [BENCHMARKS.md](BENCHMARKS.md) | Load, memory, generation and agent battery results |
+| [SOFTWARE.md](SOFTWARE.md) | Driver, storage, monitoring, power cap, fan curve, container build, model prep, service |
+| [BENCHMARKS.md](BENCHMARKS.md) | Load, memory, generation, agent battery, pictures, tuning, llama.cpp 1.0 |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Problems hit during the build and what fixed them |
-| [config/](config/) | Containerfile, podman quadlet, power-cap unit, run config, telemetry script |
+| [config/](config/) | Containerfile, podman quadlet, power-cap and fan-curve units, run config, telemetry script |
 
 ## Credits
 

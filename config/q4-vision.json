@@ -9,7 +9,7 @@
   ],
   "exe": "/opt/strata/p100-engine/build/split/strata-split-2",
   "cwd": "/opt/strata/p100-engine/engine",
-  "log": "/models/strata/config/q4.engine.log",
+  "log": "/models/strata/config/q4-vision.engine.log",
   "args": [
     "--native",
     "/models/qwen3.8-flash-next-q4kxl/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf",
@@ -26,11 +26,12 @@
     "--conversation-cache-mib",
     "4000",
     "--batch",
-    "1"
+    "1",
+    "--vision"
   ],
   "env": {
     "FNX_ARENA": "1",
-    "FNX_EXPERT_RAM_GIB": "52.5",
+    "FNX_EXPERT_RAM_GIB": "51.5",
     "FNX_PF_MOE_Q8": "0",
     "FNX_PF_ATTN_DEC": "0",
     "FNX_PF_GDN_CHUNK": "0",
@@ -69,7 +70,8 @@
     "FNX_PF_REFILL": "2",
     "FNX_PF_SP": "1",
     "FNX_PLE_RAM": "1",
-    "FNX_SH_IN": "0"
+    "FNX_SH_IN": "0",
+    "FNX_MTP_EXPERTS": "q4_0"
   },
   "host": "127.0.0.1",
   "sampling": {
@@ -80,5 +82,13 @@
     "repetition_penalty": 1,
     "frequency_penalty": 0,
     "presence_penalty": 0
+  },
+  "vision": {
+    "exe": "/opt/strata/strata/build-vision/bin/strata-vision",
+    "mmproj": "/models/qwen3.8-flash-next-q4kxl/mmproj-Qwen3.8-Flash-Next-BF16.gguf",
+    "model": "/models/qwen3.8-flash-next-q4kxl/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf",
+    "gpu": false,
+    "max_tokens": 1024,
+    "cuda_device": 0
   }
 }

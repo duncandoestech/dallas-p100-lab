@@ -8,6 +8,10 @@ COPY p100-engine p100-engine
 RUN cd p100-engine && CUDA=/usr/local/cuda-12.4 HOSTCXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++ JOBS=10 bash build.sh
 COPY strata strata
 RUN python3.12 -m venv strata/.venv && strata/.venv/bin/pip install --no-cache-dir -r strata/requirements.txt
+# Picture encoder (strata-vision), CPU only: built from the pinned Strata checkout against the engine's pinned llama.cpp
+RUN cd strata && cmake -S tools/vision -B build-vision -DCMAKE_BUILD_TYPE=Release \
+      -DLLAMA_DIR=/opt/strata/p100-engine/third_party/llama.cpp \
+    && cmake --build build-vision --target strata-vision -j 10 && ls -l build-vision/bin/strata-vision
 ENV STRATA_GGUF_PY=/opt/strata/p100-engine/third_party/llama.cpp/gguf-py \
     STRATA_NO_LARGEPAGES=1 STRATA_EXPERIMENTAL_SM60=1 \
     LD_LIBRARY_PATH=/usr/local/cuda-12.4/lib64

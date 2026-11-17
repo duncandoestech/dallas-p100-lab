@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+"""GPU fan curve for dallas: drives the ARCTIC USB fan controller (kernel
+arctic_fan hwmon driver) from the hottest NVIDIA GPU's temperature.
+
+- Follows a smoothed temperature (time constant TAU_S) so short load bursts
+  don't rev the fan; at or above the curve's top point it uses the raw
+  reading. Speeds up at once; slows down gently (after HOLD_S, DOWN_STEP %
+  per interval) so it doesn't hunt up and down.
+- Fail-safe: if the temperature can't be read, or the service stops or
+  crashes, the fan goes to 100%.
+- Curve and timing come from /etc/default/gpu-fan-curve (see CURVE below).
+"""
+import glob
+import os
+import signal
+import subprocess
+import sys
+import time
+
+# (GPU temp C, fan %) points; linear between them, flat outside.
+CURVE = os.environ.get("CURVE", "38:0,42:15,46:40,49:70,52:100")
+INTERVAL = float(os.environ.get("INTERVAL", "2"))
+TAU_S = float(os.environ.get("TAU_S", "10"))         # temperature smoothing time constant
+HOLD_S = float(os.environ.get("HOLD_S", "60"))        # keep a raised speed at least this long
+DOWN_STEP = float(os.environ.get("DOWN_STEP", "0.5"))   # max % drop per interval after the hold
+CHANNELS = os.environ.get("CHANNELS", "1").split(",")  # controller channels to drive
+FAILSAFE = 100.0
+
+points = sorted((float(t), float(p)) for t, p in (x.split(":") for x in CURVE.split(",")))
+
+
+def curve(temp: float) -> float:
+    if temp <= points[0][0]:
+        return points[0][1]
+    for (t0, p0), (t1, p1) in zip(points, points[1:]):
+        if temp <= t1:
+            return p0 + (p1 - p0) * (temp - t0) / (t1 - t0)
+    return points[-1][1]
+
+
+def hwmon() -> str | None:
+    for p in glob.glob("/sys/class/hwmon/hwmon*/name"):
+        try:
+            if open(p).read().strip() == "arctic_fan":
+                return os.path.dirname(p)
+        except OSError:
+            pass
+    return None
+
+
+def write(pct: float) -> bool:
+    h = hwmon()
+    if not h:
+        return False
+    v = str(max(0, min(255, round(pct * 255 / 100))))
+    ok = True
+    for ch in CHANNELS:
+        try:
+            with open(f"{h}/pwm{ch}", "w") as f:
+                f.write(v)
+        except OSError:
+            ok = False
+    return ok
+
+
+def max_temp() -> float | None:
+    try:
+        out = subprocess.run(["nvidia-smi", "--query-gpu=temperature.gpu", "--format=csv,noheader,nounits"],
+                             capture_output=True, text=True, timeout=10).stdout
+        temps = [float(x) for x in out.split()]
+        return max(temps) if temps else None
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+
+
+def failsafe(*_):
+    write(FAILSAFE)
+    sys.exit(0)
+
+
+signal.signal(signal.SIGTERM, failsafe)
+signal.signal(signal.SIGINT, failsafe)
+
+print(f"gpu-fan-curve: curve {points}, interval {INTERVAL}s, smoothing {TAU_S}s, hold {HOLD_S}s, "
+      f"down {DOWN_STEP}%/interval, channels {CHANNELS}", flush=True)
+cur, raised_at, last_logged, missing_logged = FAILSAFE, 0.0, None, False
+ema = None
+alpha = min(1.0, INTERVAL / TAU_S) if TAU_S > 0 else 1.0
+try:
+    while True:
+        raw = max_temp()
+        if raw is None:
+            temp = None
+        else:
+            ema = raw if ema is None else ema + alpha * (raw - ema)
+            temp = raw if raw >= points[-1][0] else ema
+        want = FAILSAFE if temp is None else curve(temp)
+        now = time.time()
+        if ema is not None and raw is not None and ema == raw and cur == FAILSAFE and raised_at == 0.0:
+            cur = want  # first good reading after start: go straight to the curve
+        elif want >= cur:
+            if want > cur:
+                raised_at = now
+            cur = want
+        elif now - raised_at >= HOLD_S:
+            cur = max(want, cur - DOWN_STEP)
+        if write(cur):
+            missing_logged = False
+        elif not missing_logged:
+            print("gpu-fan-curve: fan controller not found or not writable; retrying", flush=True)
+            missing_logged = True
+        level = round(cur / 5) * 5
+        if level != last_logged:
+            print(f"gpu-fan-curve: GPU max {raw if raw is not None else 'unreadable'} C"
+                  f" (smoothed {temp:.1f}) -> fan {cur:.0f}%" if temp is not None else
+                  f"gpu-fan-curve: GPU temperature unreadable -> fan {cur:.0f}%", flush=True)
+            last_logged = level
+        time.sleep(INTERVAL)
+except Exception:
+    write(FAILSAFE)
+    raise
