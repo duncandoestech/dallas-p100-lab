@@ -91,20 +91,25 @@ Regenerate the CDI spec after a driver update.
 
 | Folder | What | Pin |
 |---|---|---|
-| `p100-engine/` | [Megla123/qwen3.8-flash-next-2x-p100](https://github.com/Megla123/qwen3.8-flash-next-2x-p100) with the recipe's `megla-incumbent-rounding.patch` applied | `5e2976057cf4135430671771e609b91dfb733a4a` |
+| `p100-engine/` | [Megla123/qwen3.8-flash-next-2x-p100](https://github.com/Megla123/qwen3.8-flash-next-2x-p100) with the recipe's `megla-incumbent-rounding.patch` applied | `404de0a78ac044eef53fed8b46dd76639e29d089` |
 | `strata/` | [Niko1221/Strata](https://github.com/Niko1221/Strata), the Python server and tools | `ffa80d73133ea5c548aefe57889a16e8085a938f` |
 | `recipe/` | The Q4_K_XL recipe bundle (2026-11-13) shared on the P100 Discord: patch, `configure.py`, profile template | not in this repo |
 
 The image is `nvidia/cuda:12.4.1-devel-rockylinux9` plus `gcc-toolset-13` and Python 3.12, the versions the recipe
 asks for. The engine's `build.sh` fetches the llama.cpp headers it needs at `3cf03257`, builds Release for `sm_60`,
-two cards, 64-row prefill jobs, and refuses a binary that can call CUDA peer access. With `JOBS=10` on this CPU the whole
-image built in about 16 minutes. Engine SHA-256 here: `f067ea77f2a2ece51a9a43aadf26786dffe0250d60b55726f68159664f02c2dc`.
+two cards, and refuses a binary that can call CUDA peer access. `PF_JOB=96` builds 96-row prefill jobs, the build Megla
+uses for UD-Q4_K_XL (the default before `404de0a` was 64). With `JOBS=10` on this CPU the whole image built in about 14
+minutes. Engine SHA-256 here: `d8b312b9689a3f50c4c59f0d7a194d91426a74111e3d354c1ef2146f5b9195ca`.
+
+The rounding patch from the 2026-11-13 recipe still applies cleanly to `404de0a`. The box first ran `5e29760` with
+64-row jobs; moving to `404de0a` with 96-row jobs made prompt reading about 5% faster with the same answers
+([BENCHMARKS.md](BENCHMARKS.md#engine-update-404de0a-96-row-prefill-jobs)).
 
 The last build step adds Strata's picture encoder, `strata-vision`, built from the same pinned Strata checkout against
 the engine's pinned llama.cpp. It runs on the CPU, so it doesn't take any VRAM from the engine.
 
 ```
-sudo podman build -t localhost/strata-p100:q4kxl-vision-2026-11-14 -f Containerfile .
+sudo podman build -t localhost/strata-p100:q4kxl-vision-2026-11-17-pf96 -f Containerfile .
 ```
 
 ## Model files
@@ -157,7 +162,7 @@ changes speed, not answers: every drafted token is checked by the full model. If
 [config/strata.container](config/strata.container), a rootful podman quadlet in `/etc/containers/systemd/` that becomes
 `strata.service`:
 
-- Image `q4kxl-vision-2026-11-14`, config `q4-vision.json`.
+- Image `q4kxl-vision-2026-11-17-pf96`, config `q4-vision.json`.
 - Host networking, both GPUs through CDI, `/mnt/models` mounted as `/models`.
 - Listens on `0.0.0.0:8080` with **no API key**. That's a LAN-only choice; add a key before exposing it further.
 - `--memory=118g`: if the load ever overruns, the kernel kills the container, not the box.

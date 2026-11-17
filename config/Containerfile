@@ -1,11 +1,11 @@
-# Strata + Megla P100 split engine, Q4_K_XL recipe 2026-11-13 (engine 5e29760 + incumbent-rounding patch, Strata ffa80d7)
+# Strata + Megla P100 split engine (engine 404de0a + incumbent-rounding patch, 96-row prefill jobs), Strata ffa80d7
 FROM docker.io/nvidia/cuda:12.4.1-devel-rockylinux9
 RUN dnf install -y gcc-toolset-13-gcc-c++ cmake git-core python3.12 python3.12-pip binutils which procps-ng && dnf clean all
 ENV PATH=/opt/rh/gcc-toolset-13/root/usr/bin:$PATH
 WORKDIR /opt/strata
 COPY recipe recipe
 COPY p100-engine p100-engine
-RUN cd p100-engine && CUDA=/usr/local/cuda-12.4 HOSTCXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++ JOBS=10 bash build.sh
+RUN cd p100-engine && CUDA=/usr/local/cuda-12.4 HOSTCXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++ PF_JOB=96 JOBS=10 bash build.sh
 COPY strata strata
 RUN python3.12 -m venv strata/.venv && strata/.venv/bin/pip install --no-cache-dir -r strata/requirements.txt
 # Picture encoder (strata-vision), CPU only: built from the pinned Strata checkout against the engine's pinned llama.cpp

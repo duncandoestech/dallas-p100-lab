@@ -2,7 +2,8 @@
 
 Unless a section says otherwise: 2026-11-14, Strata at the recipe's default "overnight" profile
 ([SOFTWARE.md](SOFTWARE.md#run-config)), English draft vocabulary, one request at a time, 150 W per card. The
-[tuning](#tuning) on 2026-11-16 made writing about 4% faster than the numbers in the earlier sections.
+[tuning](#tuning) on 2026-11-16 made writing about 4% faster than the numbers in the earlier sections, and the
+[engine update](#engine-update-404de0a-96-row-prefill-jobs) on 2026-11-17 made prompt reading about 5% faster.
 
 ## Load and memory
 
@@ -125,6 +126,34 @@ Speeds in tokens/s. "Fresh" is writing from an empty conversation, "edit" is rew
 
 Megla's reference box, at 185 W per card, does 50.3 fresh and 62.6 / 63.5 on edits. The likely reasons dallas is
 slower are the 150 W cap and the English draft vocabulary (his prompts are Slovenian); that wasn't measured.
+
+## Engine update: 404de0a, 96-row prefill jobs
+
+2026-11-17. Megla's `404de0a` builds the engine with 96-row prefill jobs (`PF_JOB=96`) and moves the UD-Q4_K_XL
+profiles to prefill mode 6, which this box already used. A/B against the engine it ran before (`5e29760`, 64-row jobs),
+same config, two interleaved rounds, a fresh engine load each time, 150 W. Megla's `bench.py`, tokens/s:
+
+| Test | `5e29760`, 64 rows (2 runs) | `404de0a`, 96 rows (2 runs) | Change |
+|---|---:|---:|---:|
+| Fresh | 48.7 / 48.7 | 48.5 / 48.6 | same |
+| Edit py | 58.4 / 57.0 | 58.3 / 58.3 | same |
+| Edit md | 58.2 / 58.0 | 58.0 / 58.0 | same |
+| Long read, 38,862 tokens | 845 / 843 | **891 / 891** | +5.6% |
+| Write after long read | 44.9 / 44.6 | 44.3 / 45.2 | same |
+| Medium reads, 3.6K-20K tokens | 649-808 | 676-851 | +4-5% |
+
+Uncached prefill (unique prefix, `cache_n` 0), tokens/s, both runs of each:
+
+| Prompt | `5e29760`, 64 rows | `404de0a`, 96 rows |
+|---:|---:|---:|
+| 13.8K tokens | 829 / 829 | 873 / 873 |
+| 57.9K tokens | 851 / 851 | 897 / 898 |
+| 121.3K tokens | 845 / 845 | 891 / 891 |
+
+- **Same answers:** two fixed temperature-0 answers were byte-identical across all four loads.
+- **Reading is about 5% faster, writing is unchanged.** Megla measured +33% on long reads, but most of that came from
+  prefill mode 6, which this box already had; the 96-row jobs are the part that was new here.
+- Prefill is still flat across prompt length, now at about 875-900 tokens/s.
 
 ## llama.cpp 1.0 on the same box
 

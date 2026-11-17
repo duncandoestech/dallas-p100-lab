@@ -1,4 +1,4 @@
-# Strata: Qwen3.8-Flash-Next UD-Q4_K_XL on 2x P100 (recipe 2026-11-13, overnight profile, pictures on CPU). LAN :8080, no API key.
+# Strata: Qwen3.8-Flash-Next UD-Q4_K_XL on 2x P100 (Megla engine 404de0a, recipe overnight profile, pictures on CPU). LAN :8080, no API key.
 [Unit]
 Description=Strata Qwen3.8-Flash-Next Q4_K_XL (2x P100)
 Wants=network-online.target
@@ -7,7 +7,7 @@ RequiresMountsFor=/mnt/models
 
 [Container]
 ContainerName=strata
-Image=localhost/strata-p100:q4kxl-vision-2026-11-14
+Image=localhost/strata-p100:q4kxl-vision-2026-11-17-pf96
 Network=host
 AddDevice=nvidia.com/gpu=all
 SecurityLabelDisable=true
